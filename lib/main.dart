@@ -33,18 +33,28 @@ class _MyHomePageState extends State<MyHomePage> {
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
   String _memoDay = DateTime.now().toString().split(' ')[0];
+  final ValueNotifier<List<Map<String, dynamic>>> _todoListNotifier =
+      ValueNotifier([]);
+
+
+  @override
+  void initState() {
+    super.initState();
+    _requestDateTodoList();
+  }
 
   void _onDaySelected(DateTime selecetedDay, DateTime focusedDay) {
     setState(() {
       _selectedDay = selecetedDay;
       _focusedDay = focusedDay;
       _memoDay = _selectedDay.toString().split(' ')[0];
+      _requestDateTodoList();
     });
   }
 
-  Future<List<Map<String, dynamic>>> _requestDateTodoList() async {
+  Future<void> _requestDateTodoList() async {
     final data = await DatabaseHelper.instance.readDateTodo(_memoDay);
-    return data;
+    _todoListNotifier.value = data;
   }
 
   @override
@@ -66,43 +76,14 @@ class _MyHomePageState extends State<MyHomePage> {
             const SizedBox(
               height: 20,
             ),
-            FutureBuilder(
-                future: _requestDateTodoList(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircularProgressIndicator();
-                  } else {
-                    final List<Map<String, dynamic>> items =
-                        snapshot.data ?? [];
-
+            ValueListenableBuilder<List<Map<String, dynamic>>>(
+                valueListenable: _todoListNotifier,
+                builder: (context, items, _) {
                     return Expanded(
-                      child: ListView.builder(
-                          itemCount: items.length,
-                          itemBuilder: (context, index) {
-                            final item = items[index];
-
-                            return InkWell(
-                              onTap: () {
-                                print('tapped');
-                              },
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                alignment: Alignment.center,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 8),
-                                margin: const EdgeInsets.symmetric(
-                                    vertical: 8, horizontal: 12),
-                                decoration: BoxDecoration(
-                                  color: Colors.amber,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(item['content']),
-                              ),
-                            );
-                          }),
+                      child: MemoList(items: items, updatedItem: _requestDateTodoList),
                     );
                   }
-                })
+                )
           ],
         ),
       ),
@@ -118,6 +99,72 @@ class _MyHomePageState extends State<MyHomePage> {
           }
         },
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+class MemoList extends StatefulWidget {
+  const MemoList({
+    super.key,
+    required this.items,
+    required this.updatedItem,
+  });
+
+  final List<Map<String, dynamic>> items;
+  final void Function() updatedItem;
+
+  @override
+  State<MemoList> createState() => _MemoListState();
+}
+
+class _MemoListState extends State<MemoList> {
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+        itemCount: widget.items.length,
+        itemBuilder: (context, index) {
+          final item = widget.items[index];
+          return EachMemo(
+            key: ValueKey(item['id']),
+            item: item,
+            onTap: () async {
+              final updatedItem = {
+                ...item,
+                'status': (item['status'] + 1) % 2,
+              };
+              await DatabaseHelper.instance.updateTodo(updatedItem);
+              widget.updatedItem();
+            },
+          );
+        });
+  }
+}
+
+class EachMemo extends StatelessWidget {
+  const EachMemo({
+    super.key,
+    required this.item,
+    required this.onTap,
+  });
+
+  final Map<String, dynamic> item;
+  final void Function() onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        decoration: BoxDecoration(
+          color: item['status'] == 1 ? Colors.green : Colors.amber,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(item['content']),
       ),
     );
   }
