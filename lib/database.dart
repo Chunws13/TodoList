@@ -60,12 +60,11 @@ class DatabaseHelper {
     return db.query('todoList', where: 'date = ?', whereArgs: [date]);
   }
 
-  Future<int> updateTodo(
-      int id, String date, String content, bool status) async {
+  Future<int> updateTodo(Map<String, dynamic> data) async {
     final db = await instance.database;
 
-    final data = {'date': date, 'content': content, 'status': status};
-    return await db.update('todoList', data, where: 'id = ?', whereArgs: [id]);
+    return await db
+        .update('todoList', data, where: 'id = ?', whereArgs: [data['id']]);
   }
 
   Future<int> deleteTodo(int id) async {

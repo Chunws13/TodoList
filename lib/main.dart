@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'database.dart';
 import 'Screens/create_memo.dart';
+import 'Screens/memo_list.dart';
 
 void main() => runApp(const MyApp());
 
@@ -36,7 +37,6 @@ class _MyHomePageState extends State<MyHomePage> {
   final ValueNotifier<List<Map<String, dynamic>>> _todoListNotifier =
       ValueNotifier([]);
 
-
   @override
   void initState() {
     super.initState();
@@ -55,6 +55,17 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _requestDateTodoList() async {
     final data = await DatabaseHelper.instance.readDateTodo(_memoDay);
     _todoListNotifier.value = data;
+  }
+
+  Future<void> _createMemo() async {
+    final result = await Navigator.push(
+        context, MaterialPageRoute(builder: (context) => const CreateMemo()));
+
+    if (result != null) {
+      _memoDay = _selectedDay.toString().split(' ')[0];
+      await DatabaseHelper.instance.createTodo(_memoDay, result);
+      _requestDateTodoList();
+    }
   }
 
   @override
@@ -79,92 +90,17 @@ class _MyHomePageState extends State<MyHomePage> {
             ValueListenableBuilder<List<Map<String, dynamic>>>(
                 valueListenable: _todoListNotifier,
                 builder: (context, items, _) {
-                    return Expanded(
-                      child: MemoList(items: items, updatedItem: _requestDateTodoList),
-                    );
-                  }
-                )
+                  return Expanded(
+                    child: MemoList(
+                        items: items, updatedItem: _requestDateTodoList),
+                  );
+                })
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await Navigator.push(context,
-              MaterialPageRoute(builder: (context) => const CreateMemo()));
-          if (result != null) {
-            _memoDay = _selectedDay.toString().split(' ')[0];
-            await DatabaseHelper.instance.createTodo(_memoDay, result);
-
-            setState(() {});
-          }
-        },
+        onPressed: _createMemo,
         child: const Icon(Icons.add),
-      ),
-    );
-  }
-}
-
-class MemoList extends StatefulWidget {
-  const MemoList({
-    super.key,
-    required this.items,
-    required this.updatedItem,
-  });
-
-  final List<Map<String, dynamic>> items;
-  final void Function() updatedItem;
-
-  @override
-  State<MemoList> createState() => _MemoListState();
-}
-
-class _MemoListState extends State<MemoList> {
-  @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-        itemCount: widget.items.length,
-        itemBuilder: (context, index) {
-          final item = widget.items[index];
-          return EachMemo(
-            key: ValueKey(item['id']),
-            item: item,
-            onTap: () async {
-              final updatedItem = {
-                ...item,
-                'status': (item['status'] + 1) % 2,
-              };
-              await DatabaseHelper.instance.updateTodo(updatedItem);
-              widget.updatedItem();
-            },
-          );
-        });
-  }
-}
-
-class EachMemo extends StatelessWidget {
-  const EachMemo({
-    super.key,
-    required this.item,
-    required this.onTap,
-  });
-
-  final Map<String, dynamic> item;
-  final void Function() onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-        decoration: BoxDecoration(
-          color: item['status'] == 1 ? Colors.green : Colors.amber,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(item['content']),
       ),
     );
   }
