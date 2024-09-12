@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:path/path.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import '../database.dart';
 
 class MemoList extends StatefulWidget {
@@ -50,18 +50,33 @@ class EachMemo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-        decoration: BoxDecoration(
-          color: item['status'] == 1 ? Colors.green : Colors.amber,
-          borderRadius: BorderRadius.circular(12),
+    return Slidable(
+      key: ValueKey(item['id'].toString()),
+      startActionPane: ActionPane(
+        motion: const ScrollMotion(),
+        children: [
+          SlidableAction(
+            onPressed: (context) async {},
+            label: "Edit",
+            icon: Icons.archive,
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+          decoration: BoxDecoration(
+            color: item['status'] == 1 ? Colors.green : Colors.amber,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            item['content'],
+          ),
         ),
-        child: Text(item['content']),
       ),
     );
   }
