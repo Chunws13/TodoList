@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
 class CreateMemo extends StatefulWidget {
-  const CreateMemo({super.key});
+  final String? content;
+
+  const CreateMemo({
+    super.key,
+    this.content,
+  });
 
   @override
   State<CreateMemo> createState() => _CreateMemoState();
@@ -10,15 +15,24 @@ class CreateMemo extends StatefulWidget {
 class _CreateMemoState extends State<CreateMemo> {
   final _formKey = GlobalKey<FormState>();
 
-  String? _content;
+  late TextEditingController _contentControler;
 
-  final TextEditingController _contentControler = TextEditingController();
+  @override
+  void initState() {
+    super.initState();
+    _contentControler = TextEditingController(text: widget.content ?? '');
+  }
 
   void _contentSumbit() {
     if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      Navigator.pop(context, _content);
+      Navigator.pop(context, _contentControler.text);
     }
+  }
+
+  @override
+  void dispose() {
+    _contentControler.dispose();
+    super.dispose();
   }
 
   @override
@@ -35,7 +49,6 @@ class _CreateMemoState extends State<CreateMemo> {
               TextFormField(
                 controller: _contentControler,
                 decoration: const InputDecoration(labelText: "오늘 할 일"),
-                onSaved: (String? value) => _content = value,
                 validator: (String? value) {
                   if (value == null || value.isEmpty) {
                     return "1자 이상 입력하세요";

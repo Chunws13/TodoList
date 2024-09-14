@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import '../database.dart';
+import '../Screens/create_memo.dart';
 
 class MemoList extends StatefulWidget {
   const MemoList({
@@ -28,6 +29,17 @@ class _MemoListState extends State<MemoList> {
     widget.updatedItem();
   }
 
+  Future<void> _updateItem(Map<String, dynamic> item) async {
+    final updateContent = await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => CreateMemo(content: item['content'])));
+
+    final updateItem = {...item, 'content': updateContent};
+    await DatabaseHelper.instance.updateTodo(updateItem);
+    widget.updatedItem();
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
@@ -38,6 +50,7 @@ class _MemoListState extends State<MemoList> {
             item: item,
             complete: _completeItem,
             delete: _deleteItem,
+            update: _updateItem,
           );
         });
   }
@@ -49,11 +62,13 @@ class EachMemo extends StatelessWidget {
     required this.item,
     required this.complete,
     required this.delete,
+    required this.update,
   });
 
   final Map<String, dynamic> item;
   final Future<void> Function(Map<String, dynamic>) complete;
   final Future<void> Function(Map<String, dynamic>) delete;
+  final Future<void> Function(Map<String, dynamic>) update;
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +84,7 @@ class EachMemo extends StatelessWidget {
               width: 5,
             ),
             SlidableAction(
-                onPressed: (BuildContext context) => delete(item),
+                onPressed: (BuildContext context) => update(item),
                 backgroundColor: Colors.green,
                 borderRadius: BorderRadius.circular(12),
                 icon: Icons.edit),
@@ -77,7 +92,7 @@ class EachMemo extends StatelessWidget {
               width: 5,
             ),
             SlidableAction(
-              onPressed: (context) async {},
+              onPressed: (BuildContext context) => delete(item),
               backgroundColor: Colors.red,
               borderRadius: BorderRadius.circular(12),
               icon: Icons.delete,
