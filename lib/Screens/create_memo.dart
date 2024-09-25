@@ -60,14 +60,16 @@ class _CreateMemoState extends State<CreateMemo> {
     showCupertinoModalPopup(
       context: context,
       builder: (_) => Container(
-        height: 150,
+        height: 200,
         color: Colors.white,
         child: Column(
           children: [
             SizedBox(
               height: 150,
               child: CupertinoDatePicker(
+                dateOrder: DatePickerDateOrder.ymd,
                 initialDateTime: _selectedDate,
+                maximumDate: DateTime.now(),
                 mode: CupertinoDatePickerMode.date,
                 onDateTimeChanged: (DateTime newDate) {
                   setState(() {
@@ -76,11 +78,6 @@ class _CreateMemoState extends State<CreateMemo> {
                 },
               ),
             ),
-            // 완료 버튼
-            // CupertinoButton(
-            //   child: const Text('완료'),
-            //   onPressed: () => Navigator.of(context).pop(),
-            // )
           ],
         ),
       ),
@@ -102,6 +99,7 @@ class _CreateMemoState extends State<CreateMemo> {
         ),
         body: Column(
           children: [
+            const SizedBox(height: 32),
             Form(
               key: _formKey,
               child: TextFormField(
@@ -122,10 +120,6 @@ class _CreateMemoState extends State<CreateMemo> {
                   onPressed: _repeatBtnPress,
                   child: const Text("반복"),
                 ),
-                ElevatedButton(
-                  onPressed: _contentSumbit,
-                  child: const Text("저장"),
-                ),
               ],
             ),
             Expanded(
@@ -139,6 +133,13 @@ class _CreateMemoState extends State<CreateMemo> {
                   : const Text(""),
             ),
           ],
+        ),
+        bottomNavigationBar: Padding(
+          padding: const EdgeInsets.all(16),
+          child: ElevatedButton(
+            onPressed: _contentSumbit,
+            child: const Text("저장"),
+          ),
         ),
       ),
     );
