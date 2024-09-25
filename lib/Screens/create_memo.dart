@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 
 class CreateMemo extends StatefulWidget {
   final String? content;
@@ -17,12 +18,28 @@ class _CreateMemoState extends State<CreateMemo> {
   bool repeat = false;
   bool alarm = false;
 
+  Map<String, bool> days = {
+    "일": false,
+    "월": false,
+    "화": false,
+    "수": false,
+    "목": false,
+    "금": false,
+    "토": false
+  };
+
   late TextEditingController _contentControler;
 
   @override
   void initState() {
     super.initState();
     _contentControler = TextEditingController(text: widget.content ?? '');
+  }
+
+  void dayPressed(String day) {
+    setState(() {
+      days[day] = !days[day]!;
+    });
   }
 
   void _contentSumbit() {
@@ -37,10 +54,37 @@ class _CreateMemoState extends State<CreateMemo> {
     });
   }
 
-  void _alarmBtnPress() {
-    setState(() {
-      alarm = !alarm;
-    });
+  DateTime _selectedDate = DateTime.now();
+
+  void _showDatePicker(BuildContext context) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (_) => Container(
+        height: 150,
+        color: Colors.white,
+        child: Column(
+          children: [
+            SizedBox(
+              height: 150,
+              child: CupertinoDatePicker(
+                initialDateTime: _selectedDate,
+                mode: CupertinoDatePickerMode.date,
+                onDateTimeChanged: (DateTime newDate) {
+                  setState(() {
+                    _selectedDate = newDate;
+                  });
+                },
+              ),
+            ),
+            // 완료 버튼
+            // CupertinoButton(
+            //   child: const Text('완료'),
+            //   onPressed: () => Navigator.of(context).pop(),
+            // )
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -71,9 +115,6 @@ class _CreateMemoState extends State<CreateMemo> {
                 },
               ),
             ),
-            const SizedBox(
-              height: 36,
-            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -82,68 +123,62 @@ class _CreateMemoState extends State<CreateMemo> {
                   child: const Text("반복"),
                 ),
                 ElevatedButton(
-                  onPressed: _alarmBtnPress,
-                  child: const Text("알림"),
+                  onPressed: _contentSumbit,
+                  child: const Text("저장"),
                 ),
               ],
             ),
-            repeat ? const DayWidget() : const Text(""),
-            alarm ? const Text("알람 버튼 True") : const Text(""),
+            Expanded(
+              child: repeat
+                  ? DayWidget(
+                      days: days,
+                      dayPressed: dayPressed,
+                      selectedDate: _selectedDate,
+                      textBtnPressed: _showDatePicker,
+                    )
+                  : const Text(""),
+            ),
           ],
-        ),
-        bottomNavigationBar: Padding(
-          padding: const EdgeInsets.all(16),
-          child: ElevatedButton(
-            onPressed: _contentSumbit,
-            child: const Text("저장"),
-          ),
         ),
       ),
     );
   }
 }
 
-class DayWidget extends StatefulWidget {
-  const DayWidget({super.key});
+class DayWidget extends StatelessWidget {
+  final Map<String, bool> days;
+  final Function(String) dayPressed;
+  final DateTime selectedDate;
+  final Function(BuildContext) textBtnPressed;
 
-  @override
-  State<DayWidget> createState() => _DayWidgetState();
-}
+  DayWidget({
+    super.key,
+    required this.days,
+    required this.dayPressed,
+    required this.selectedDate,
+    required this.textBtnPressed,
+  });
 
-class _DayWidgetState extends State<DayWidget> {
-  Map<String, bool> days = {
-    "일": false,
-    "월": false,
-    "화": false,
-    "수": false,
-    "목": false,
-    "금": false,
-    "토": false
-  };
-
-  void dayPressed(String day) {
-    setState(() {
-      days[day] = !days[day]!;
-    });
-  }
+  String defaultDate = DateTime.now().toString().split(' ')[0];
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      children: days.keys.map((day) {
-        return GestureDetector(
+    return ListView(children: [
+      ...days.keys.map((day) {
+        return ListTile(
+          leading: Icon(Icons.check_circle_outline,
+              color: days[day]! ? Colors.green : Colors.grey),
+          title: Text("$day요일"),
           onTap: () => dayPressed(day),
-          child: CircleAvatar(
-            radius: 20,
-            backgroundColor: days[day]! ? Colors.black : Colors.red,
-            child: Text(
-              day,
-              style: const TextStyle(color: Colors.white),
-            ),
-          ),
         );
-      }).toList(),
-    );
+      }),
+      TextButton(
+        child: Text(
+          "$defaultDate 까지",
+          style: const TextStyle(fontSize: 16),
+        ),
+        onPressed: () => textBtnPressed(context),
+      ),
+    ]);
   }
 }
