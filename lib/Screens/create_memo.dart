@@ -151,7 +151,7 @@ class DayWidget extends StatelessWidget {
   final DateTime selectedDate;
   final Function(BuildContext) textBtnPressed;
 
-  DayWidget({
+  const DayWidget({
     super.key,
     required this.days,
     required this.dayPressed,
@@ -159,22 +159,20 @@ class DayWidget extends StatelessWidget {
     required this.textBtnPressed,
   });
 
-  String defaultDate = DateTime.now().toString().split(' ')[0];
-
   @override
   Widget build(BuildContext context) {
     return ListView(children: [
       ...days.keys.map((day) {
         return ListTile(
           leading: Icon(Icons.check_circle_outline,
-              color: days[day]! ? Colors.green : Colors.grey),
+              color: days[day]! ? Colors.red : Colors.grey),
           title: Text("$day요일"),
           onTap: () => dayPressed(day),
         );
       }),
       TextButton(
         child: Text(
-          "$defaultDate 까지",
+          "${selectedDate.toString().split(" ")[0]} 까지",
           style: const TextStyle(fontSize: 16),
         ),
         onPressed: () => textBtnPressed(context),
